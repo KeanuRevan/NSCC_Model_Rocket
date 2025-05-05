@@ -22,7 +22,7 @@ Powered by the **Arduino MKR GSM 1400**, the flight computer includes:
 - **Optional Payload**:
   - Mini GoPro Hero 4 for onboard video capture.
 
-### 🫺 Launch Controller (Ground Station)
+### 🧨 Launch Controller (Ground Station)
 - Launch button with arming safety key
 - Armed status indicator (LED)
 - Wireless control to safely initiate launch from a distance
