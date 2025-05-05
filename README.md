@@ -103,5 +103,10 @@ Ensure the following Arduino libraries are installed:
 
 ---
 
+## 📅 Project Duration
+April 2025 – May 2025 (2 months)
+
+---
+
 ## 🛡️ License
 [MIT License](LICENSE)
