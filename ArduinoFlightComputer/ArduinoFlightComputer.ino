@@ -27,7 +27,7 @@ float currentVelocity = 0;
 // Filenames for CSV logs
 String gpsFileName = "gpslog.csv";
 String envFileName = "envlog.csv";
-String flightLogFileName = "flightlog.csv";
+String flightLogFileName = "flight.csv";
 
 // Data logging intervals (in milliseconds)
 const unsigned long envInterval = 1000;  // Log environment data every 1s
@@ -75,9 +75,14 @@ void logToSD(const String& filename, const String& data) {
 
 // Writes CSV header if file doesn't already exist
 void ensureCSVHeader(const char* filename, const char* header) {
-  if (!SD.exists(filename)) {
-    logToSD(filename, header);
+  if (SD.exists(filename)) {
+    SD.remove(filename);
+    Serial.print("Deleted existing ");
+    Serial.println(filename);
   }
+  logToSD(filename, header);
+  Serial.print("Created ");
+  Serial.println(filename);
 }
 
 // ---------- Setup Function ----------
