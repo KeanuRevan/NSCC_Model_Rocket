@@ -1,6 +1,7 @@
 // Include necessary libraries for sensors and peripherals
 #include <Arduino_MKRENV.h>        // Environmental sensor library
 #include <Arduino_MKRGPS.h>        // GPS module library
+#include <MKRGSM.h>
 #include <Adafruit_MPU6050.h>      // Accelerometer & gyroscope library
 #include <Adafruit_Sensor.h>       // Unified sensor interface
 #include <Wire.h>                  // I2C communication
@@ -9,6 +10,19 @@
 
 #define SD_CS_PIN 4                // SD card Chip Select pin
 File dataFile;                     // File object for logging
+
+const char PINNUMBER[]     = ""; // SIM PIN if any
+const char GPRS_APN[]      = "america.bics"; // <-- Replace with your carrier's APN
+const char GPRS_LOGIN[]    = "";
+const char GPRS_PASSWORD[] = "";
+
+GSMClient client;
+GPRS gprs;
+GSM gsmAccess;
+
+// Your webhook host and path
+const char* host = "webhook.site";
+const char* path = "/c3e7db99-2d82-4a8b-92b5-ba3dc5df0e9d";
 
 // Initialize the MPU6050 accelerometer object
 Adafruit_MPU6050 mpu;
@@ -32,13 +46,17 @@ String flightLogFileName = "flight.csv";
 // Data logging intervals (in milliseconds)
 const unsigned long envInterval = 1000;  // Log environment data every 1s
 const unsigned long gpsInterval = 1000;  // Log GPS data every 1s
+const unsigned long webHookInterval = 60000;  // POST data to WebHook every 1 minute(s) https://webhook.site/#!/view/c3e7db99-2d82-4a8b-92b5-ba3dc5df0e9d/40891b76-6c79-49f0-8bfa-c7a4ec6be504/1
 const unsigned long mpuInterval = 100;   // Sample MPU every 100ms
 
 // Time tracking for intervals
 unsigned long lastEnvMillis = 0;
 unsigned long lastGPSMillis = 0;
 unsigned long lastMPUMillis = 0;
+unsigned long lastWebHookMillis = 0;
 unsigned long previousMillis = 0;
+
+float dateTimeTestValue = 0.0; //TEST VALUE HERE
 
 // ---------- Utility Functions ----------
 
@@ -85,25 +103,63 @@ void ensureCSVHeader(const char* filename, const char* header) {
   Serial.println(filename);
 }
 
+// POST to WebHook
+void sendMessage(String message) {
+  if (client.connect(host, 80)) {
+    Serial.println("Connected to webhook.site");
+
+    client.print("POST " + String(path) + " HTTP/1.1\r\n");
+    client.print("Host: webhook.site\r\n");
+    client.print("Content-Type: text/plain\r\n");
+    client.print("Content-Length: " + String(message.length()) + "\r\n");
+    client.print("Connection: close\r\n");
+    client.print("\r\n");
+    client.print(message);
+
+    Serial.println("Message sent to webhook.site");
+  } else {
+    Serial.println("Connection to webhook.site failed");
+    return;
+  }
+
+  // Read and print the server response
+  while (client.connected() || client.available()) {
+    if (client.available()) {
+      char c = client.read();
+      Serial.write(c);
+    }
+  }
+
+  client.stop();
+  Serial.println("Connection closed");
+}
+
 // ---------- Setup Function ----------
 void setup() {
   Serial.begin(9600);                // Start serial communication
   while (!Serial);                   // Wait for serial monitor
+
+  Serial.println("Initializing...");
 
   // Initialize all sensors and SD card, halt if any fail
   checkInit(ENV.begin(), "MKR ENV Shield initialized.", "Failed to initialize MKR ENV Shield!");
   checkInit(GPS.begin(GPS_MODE_SHIELD), "MKR GPS initialized.", "Failed to init GPS!");
   checkInit(SD.begin(SD_CS_PIN), "SD card initialized.", "SD init failed!");
   checkInit(mpu.begin(), "MPU6050 initialized.", "MPU6050 failed!");
+  // Connect cellular
+  checkInit(gsmAccess.begin(PINNUMBER) == GSM_READY, "GSM connected", "GSM connection failed");
+  checkInit(gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY, "GPRS connected", "GPRS connection failed");
 
   // Configure accelerometer and gyroscope range
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
 
   // Ensure headers are added to CSV files if not present
-  ensureCSVHeader(envFileName.c_str(), "Temperature,Humidity,Pressure,Illuminance,UVA,UVB,UVIndex");
-  ensureCSVHeader(gpsFileName.c_str(), "Latitude,Longitude,Altitude,Speed,Satellites");
-  ensureCSVHeader(flightLogFileName.c_str(), "FlightTime(s),MaxAltitude(m),PeakAcceleration(g),PeakVelocity(m/s)");
+  ensureCSVHeader(envFileName.c_str(), "DateTime,Temperature,Humidity,Pressure,Illuminance,UVA,UVB,UVIndex");
+  ensureCSVHeader(gpsFileName.c_str(), "DateTime,Latitude,Longitude,Altitude,Speed,Satellites");
+  ensureCSVHeader(flightLogFileName.c_str(), "DateTime,FlightTime(s),MaxAltitude(m),PeakAcceleration(g),PeakVelocity(m/s)");
+
+  sendMessage("Hello from Setup");
 }
 
 // ---------- Main Loop ----------
@@ -116,6 +172,7 @@ void loop() {
 
     // Read environmental values from MKR ENV Shield
     float envValues[] = {
+      dateTimeTestValue, //TEST VALUE HERE
       ENV.readTemperature(),
       ENV.readHumidity(),
       ENV.readPressure(),
@@ -141,12 +198,17 @@ void loop() {
     float speed = GPS.speed();
     int satellites = GPS.satellites();
 
-    float gpsValues[] = { latitude, longitude, altitude, speed, (float)satellites };
-    String gpsCSV = createCSV(gpsValues, 5, 7);
+    float gpsValues[] = { dateTimeTestValue, latitude, longitude, altitude, speed, (float)satellites }; //TEST VALUE HERE
+    String gpsCSV = createCSV(gpsValues, 6, 7); // String gpsCSV = createCSV(gpsValues, 5, 7); //TEST VALUE HERE
     logToSD(gpsFileName, gpsCSV);
 
     // Track highest altitude reached
     if (altitude > maxAltitude) maxAltitude = altitude;
+
+    // POST GPS data to WebHook
+    if (currentMillis - lastWebHookMillis >= webHookInterval) {
+
+    }
   }
 
   // === MPU6050 ACCELERATION & FLIGHT LOGIC ===
@@ -184,8 +246,8 @@ void loop() {
         inFlight = false;
 
         float flightTime = (currentMillis - launchTime) / 1000.0;  // Total flight duration
-        float flightData[] = { flightTime, maxAltitude, peakAcceleration, peakVelocity };
-        String flightCSV = createCSV(flightData, 4, 2);
+        float flightData[] = { dateTimeTestValue, flightTime, maxAltitude, peakAcceleration, peakVelocity }; //TEST VALUE HERE
+        String flightCSV = createCSV(flightData, 5, 2); // String flightCSV = createCSV(flightData, 4, 2); //TEST VALUE HERE
         logToSD(flightLogFileName, flightCSV);  // Save final flight log
 
         Serial.println("Flight Complete:");
