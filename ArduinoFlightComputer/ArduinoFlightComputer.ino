@@ -205,9 +205,9 @@ void loop() {
     // Track highest altitude reached
     if (altitude > maxAltitude) maxAltitude = altitude;
 
-    // POST GPS data to WebHook
+    // POST GPS URL data to WebHook
     if (currentMillis - lastWebHookMillis >= webHookInterval) {
-
+      sendMessage( "https://www.google.com/maps?q=" + String(latitude, 6) + "," + String(longitude, 6));
     }
   }
 
