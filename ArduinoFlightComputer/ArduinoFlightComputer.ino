@@ -137,7 +137,7 @@ void sendMessage(String message) {
 // ---------- Setup Function ----------
 void setup() {
   Serial.begin(9600);                // Start serial communication
-  while (!Serial);                   // Wait for serial monitor
+  //while (!Serial);                   // Wait for serial monitor, comment out if not connected to computer
 
   Serial.println("Initializing...");
 
