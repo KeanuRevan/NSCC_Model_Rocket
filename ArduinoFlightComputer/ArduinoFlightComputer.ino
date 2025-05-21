@@ -11,6 +11,7 @@
 // --- SD card configuration ---
 #define SD_CS_PIN 4
 File dataFile;
+const char* rocketFolder = "rocket";
 
 // --- GSM and GPRS settings ---
 const char PINNUMBER[]     = "";
@@ -43,11 +44,11 @@ float currentVelocity = 0;
 float initialPitch = 0;
 float initialRoll = 0;
 
-// --- Log file names ---
-String gpsFileName = "gpslog.csv";
-String envFileName = "envlog.csv";
-String flightLogFileName = "flight.csv";
-String motionLogFileName = "motion.csv";
+// --- Log file names (with rocket folder) ---
+String gpsFileName = String(rocketFolder) + "/gpslog.csv";
+String envFileName = String(rocketFolder) + "/envlog.csv";
+String flightLogFileName = String(rocketFolder) + "/flight.csv";
+String motionLogFileName = String(rocketFolder) + "/motion.csv";
 
 // --- Data collection intervals ---
 const unsigned long envInterval = 1000;
@@ -81,7 +82,7 @@ String createCSV(const float values[], size_t count, int decimalPlaces = 2) {
 }
 
 void logToSD(const String& filename, const String& data) {
-  dataFile = SD.open(filename, FILE_WRITE);
+  dataFile = SD.open(filename.c_str(), FILE_WRITE);
   if (dataFile) {
     dataFile.println(data);
     dataFile.close();
@@ -91,9 +92,9 @@ void logToSD(const String& filename, const String& data) {
   }
 }
 
-void ensureCSVHeader(const char* filename, const char* header) {
-  if (SD.exists(filename)) {
-    SD.remove(filename);
+void ensureCSVHeader(const String& filename, const char* header) {
+  if (SD.exists(filename.c_str())) {
+    SD.remove(filename.c_str());
     Serial.print("Deleted existing ");
     Serial.println(filename);
   }
@@ -136,6 +137,13 @@ void setup() {
   checkInit(ENV.begin(), "MKR ENV Shield initialized.", "Failed to initialize MKR ENV Shield!");
   checkInit(GPS.begin(GPS_MODE_SHIELD), "MKR GPS initialized.", "Failed to init GPS!");
   checkInit(SD.begin(SD_CS_PIN), "SD card initialized.", "SD init failed!");
+
+  // Create rocket directory if it doesn't exist
+  if (!SD.exists(rocketFolder)) {
+    SD.mkdir(rocketFolder);
+    Serial.println("Created 'rocket' folder on SD card.");
+  }
+
   checkInit(mpu.begin(), "MPU6050 initialized.", "MPU6050 failed!");
   checkInit(gsmAccess.begin(PINNUMBER) == GSM_READY, "GSM connected", "GSM connection failed");
   checkInit(gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY, "GPRS connection failed", "GPRS connection failed");
@@ -143,14 +151,13 @@ void setup() {
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
 
-  ensureCSVHeader(envFileName.c_str(), "Temperature,Humidity,Pressure,Illuminance,UVA,UVB,UVIndex");
-  ensureCSVHeader(gpsFileName.c_str(), "Latitude,Longitude,Altitude,Speed,Satellites");
-  ensureCSVHeader(flightLogFileName.c_str(), "FlightTime(s),MaxAltitude(m),PeakAcceleration(g),PeakVelocity(m/s)");
-  ensureCSVHeader(motionLogFileName.c_str(), "AccelerationZ(g),Velocity(m/s),Pitch(degrees),Roll(degrees)");
+  ensureCSVHeader(envFileName, "Temperature,Humidity,Pressure,Illuminance,UVA,UVB,UVIndex");
+  ensureCSVHeader(gpsFileName, "Latitude,Longitude,Altitude,Speed,Satellites");
+  ensureCSVHeader(flightLogFileName, "FlightTime(s),MaxAltitude(m),PeakAcceleration(g),PeakVelocity(m/s)");
+  ensureCSVHeader(motionLogFileName, "AccelerationZ(g),Velocity(m/s),Pitch(degrees),Roll(degrees)");
 
   delay(1000); // Let MPU stabilize
 
-  // Auto-zero MPU orientation
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
@@ -227,7 +234,6 @@ void loop() {
     float pitch = atan2(ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
     float roll = atan2(ay, sqrt(ax * ax + az * az)) * 180.0 / PI;
 
-    // Adjust for zeroing
     float zeroedPitch = pitch - initialPitch;
     float zeroedRoll = roll - initialRoll;
 
