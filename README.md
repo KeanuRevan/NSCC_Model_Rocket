@@ -1,6 +1,6 @@
 # 🚀 NSCC_Model_Rocket
 
-An embedded avionics and launch control system for a 3D-printed model rocket — designed and built by NSCC students. This project combines embedded programming, wireless communication, and aerospace telemetry to create a fully functional **flight computer** and **remote launch controller**.
+An embedded avionics and launch control system for a 3D-printed model rocket — designed and built by Nova Scotia Community College (NSCC) students. This project combines embedded programming, wireless communication, and aerospace telemetry to create a fully functional **flight computer** and **remote launch controller**.
 
 ---
 
@@ -93,7 +93,7 @@ Ensure the following Arduino libraries are installed:
 ---
 
 ## 🧑‍💻 Authors  
-**NSCC Embedded Systems Programming Students**
+**Nova Scotia Community College (NSCC) Students**
 
 **Aaron Thomas**  
 - *Information Technology Programming* (Sept 2019 – Apr 2021)  
