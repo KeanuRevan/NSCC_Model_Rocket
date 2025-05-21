@@ -31,6 +31,7 @@ Install the following libraries using the Arduino Library Manager:
 * Connect the Adafruit MPU6050 via I2C (SDA to SDA, SCL to SCL).
 * Insert a micro SD card into the SD module.
 * Insert an activated SIM card into the GSM shield.
+
 ![ArduinoFlightComputerWiringDiagram](https://github.com/user-attachments/assets/474d8983-8e12-4539-9121-fda423e5bfe7)
 
 ### 3. Configure GSM and Webhook Settings
