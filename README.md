@@ -38,28 +38,6 @@ Powered by the **Arduino MKR GSM 1400**, the flight computer includes:
 
 ---
 
-## 🛠️ Setup Instructions
-
-### 1. Wiring Diagrams
-(Include Fritzing or schematic diagrams here)
-
-### 2. Libraries Required
-Ensure the following Arduino libraries are installed:
-- `MKRGSM`
-- `MKRGPS`
-- `Arduino_MKRENV`
-- `Wire`
-- `Adafruit_MPU6050`
-- `SD`
-
-### 3. Assembly Order
-1. Mount GPS and ENV shields on MKR GSM 1400
-2. Connect MPU6050 via I2C (SDA/SCL)
-3. Insert SD card into ENV Shield
-4. Connect launch controller (via RF, Bluetooth, or Wi-Fi module)
-
----
-
 ## 📊 Data Captured
 - Latitude / Longitude / Altitude
 - Velocity and Acceleration (calculated from GPS and IMU)
