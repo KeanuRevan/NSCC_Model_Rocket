@@ -24,8 +24,8 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-#define NUM_FRAMES 24000        // Number of frames to capture
-#define FRAME_INTERVAL 50  // Milliseconds between frames
+#define NUM_FRAMES 30000        // Number of frames to capture
+#define FRAME_INTERVAL 100  // Milliseconds between frames
 
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
@@ -57,7 +57,7 @@ void setup() {
   config.pixel_format = PIXFORMAT_JPEG;
   config.frame_size = FRAMESIZE_QVGA;
   // config.frame_size = FRAMESIZE_VGA;
-  // config.frame_size = FRAMESIZE_SXGA;
+  // // config.frame_size = FRAMESIZE_SXGA;
   config.jpeg_quality = 12;
   config.fb_count = 2;
 

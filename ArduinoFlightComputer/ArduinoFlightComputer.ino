@@ -259,6 +259,7 @@ void loop() {
 
       if (launched && inFlight && (currentMillis - launchTime > 5000) && abs(accelZ - 1.0) < 0.1) {
         inFlight = false;
+        launched = false;
         float flightTime = (currentMillis - launchTime) / 1000.0;
         float flightData[] = { flightTime, maxAltitude, peakAcceleration, peakVelocity };
         logToSD(flightLogFileName, createCSV(flightData, 4));
